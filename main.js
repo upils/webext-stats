@@ -79,8 +79,8 @@ try {
         const downloadLink = buildDownloadLink(extensionId)
         try {
             if (extensionId === 'kkhacajnlbpkdjgomnfknhbbpioiiiep') {
-                const file = downloadFile(downloadLink, extensionId)
-                const extensionZip = await checkFileAndParse(file)
+                const filePath = await downloadFile(downloadLink, extensionId)
+                const extensionZip = await checkFileAndParse(filePath)
             }
         } catch (error) {
             console.log(error)

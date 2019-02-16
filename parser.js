@@ -2,11 +2,12 @@ const util = require('util')
 const fs = require('fs')
 
 const readFile = util.promisify(fs.readFile)
+const writeFile = util.promisify(fs.writeFile)
 
-const CRXFileParser = function(file) {
+const CRXFileParser = function(fileBuffer) {
     var self = this
 
-    self.file = file
+    self.fileBuffer = fileBuffer
 
     this._formatUint32 = function (uint) {
         var s = uint.toString(16);
@@ -49,35 +50,15 @@ const CRXFileParser = function(file) {
         const signatureBuffer = arrayBuffer.slice(16 + publicKeyLength, 16 + publicKeyLength + signatureLength)
 
         const zipArchiveBuffer = arrayBuffer.slice(16 + publicKeyLength + signatureLength)
+        console.log(arrayBuffer.byteLength)
 
         return [zipArchiveBuffer, publicKeyBuffer, signatureBuffer]
     }
 
-    this.load = function (handler) {
-        let resultHandler = handler;
-
-        const reader = new FileReader()
-
-        reader.onload = function(event) {
-            const buffer = event.target.result
-            const view = new DataView(buffer)
-            resultHandler(self.parse(view, buffer))
-        };
-
-        reader.onerror = function(event) {
-            resultHandler(undefined)
-        }
-
-        reader.readAsArrayBuffer(this.file)
-    }
-
     this.asyncLoad = async function () {
         try {
-            // console.log(this.file)
-            // const buffer = await readFile(this.file)
-            const view = new DataView(this.file)
-            const parsedData = self.parse(view, arrayBuffer)
-
+            const view = new DataView(this.fileBuffer)
+            const parsedData = self.parse(view, this.fileBuffer)
             return parsedData
         } catch (error) {
             console.log(error)
@@ -85,25 +66,16 @@ const CRXFileParser = function(file) {
     }
 }
 
-const checkFileAndParse = async function (file) {
-    const parser = new CRXFileParser(file)
-    /*
-    parser.load(function(parsingResult){
-        if (!parsingResult) {
-            console.log('Unable to parse this file. The file may be broken or unknown error has occured.');
-            return
-        }
-
-        const zipArchiveBuffer = parsingResult[0]
-        const outputFile = new Blob([zipArchiveBuffer], {type: 'application/zip'})
-        return outputFile
-    })
-    */
+const checkFileAndParse = async function (filePath) {
+    const file = await readFile(filePath)
+    const fileBuffer = file.buffer
+    const parser = await new CRXFileParser(fileBuffer)
     try {
         const parsingResult = await parser.asyncLoad()
         const zipArchiveBuffer = parsingResult[0]
-        const outputFile = new Blob([zipArchiveBuffer], {type: 'application/zip'})
-        return outputFile
+        const outputFile = Buffer.from(zipArchiveBuffer)
+        console.log(outputFile.byteLength)
+        await writeFile('test.zip', outputFile)
     }
     catch (error) {
         console.log(error)

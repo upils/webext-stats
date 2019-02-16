@@ -9,6 +9,6 @@
   },
   "devDependencies": {},
   "scripts": {
-    "run": "node main.js"
+    "launch": "node main.js"
   }
 }
