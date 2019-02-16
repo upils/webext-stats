@@ -1,0 +1,14 @@
+{
+  "name": "webext-stats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "node-fetch": "^2.3.0",
+    "util": "^0.11.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "run": "node main.js"
+  }
+}
