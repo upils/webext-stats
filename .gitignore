@@ -1,3 +1,4 @@
 node_modules/
 extensions/
 .DS_Store
+*.xlsx
