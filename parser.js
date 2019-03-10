@@ -66,7 +66,7 @@ const CRXFileParser = function(fileBuffer) {
     }
 }
 
-const checkFileAndParse = async function (filePath) {
+const checkFileAndParse = async function (filePath, extensionId) {
     const file = await readFile(filePath)
     const fileBuffer = file.buffer
     const parser = await new CRXFileParser(fileBuffer)
@@ -75,7 +75,7 @@ const checkFileAndParse = async function (filePath) {
         const zipArchiveBuffer = parsingResult[0]
         const outputFile = Buffer.from(zipArchiveBuffer)
         console.log(outputFile.byteLength)
-        await writeFile('test.zip', outputFile)
+        await writeFile(extensionId+'.zip', outputFile)
     }
     catch (error) {
         console.log(error)
