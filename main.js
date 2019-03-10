@@ -1,23 +1,22 @@
 const fetch = require("node-fetch");
-const { URLSearchParams } = require('url');
-const { CRXFileParser, checkFileAndParse } = require('./parser')
 const downloadFile = require('./utils')
-const StreamZip = require('node-stream-zip')
+const unzip = require("unzip-crx");
+const fs = require('fs');
+const rmdir = require('rimraf');
 
 const baseUrlList = 'https://chrome.google.com/webstore/ajax/item?'
 
 const params = {
-'hl': 'en',
+'hl': 'en-GB',
 'gl': 'FR',
 'pv': '20181009',
-'mce': 'atf%2Cpii%2Crtr%2Crlb%2Cgtc%2Chcn%2Csvp%2Cwtd%2Cnrp%2Chap%2Cnma%2Cnsp%2Cdpb%2Cc3d%2Cncr%2Cctm%2Cac%2Chot%2Cmac%2Cfcf%2Crma%2Cpot%2Cevt%2Cigb',
-'count': '96',
-'token': '121%405767320',
-'category': 'extensions',
+'mce': 'atf%2Cpii%2Crtr%2Crlb%2Cgtc%2Chcn%2Csvp%2Cwtd%2Cnrp%2Chap%2Cnma%2Cnsp%2Cdpb%2Cc3d%2Cncr%2Cctm%2Cac%2Chot%2Cmac%2Cfcf%2Crma',
+'count': '100',
+'marquee': 'true',
+'category': 'collection%2Fnew_noteworthy_extensions',
 'sortBy': '0',
 'container': 'CHROME',
-'features': '9',
-'_reqid': '961501',
+'_reqid': '162367',
 'rt': 'j'
 }
 
@@ -42,7 +41,6 @@ const options = {
 
 const getData = async url => {
     try {
-        console.log(url)
         const response = await fetch(url, options);
         const body = await response.text();
         return body
@@ -71,34 +69,34 @@ if (typeof Array.prototype.reIndexOf === 'undefined') {
 // Main function
 (async () => {
 try {
+    console.log(urlList)
     const response = await getData(urlList)
-    // console.log(response)
-    console.log(JSON.parse(response.split("\n").slice(1).join("\n")))
-    const cleanResponse = JSON.parse(response.split("\n").slice(1).join("\n"))[1]
-    console.log(cleanResponse)
+    console.log(response)
+    const cleanResponse = JSON.parse(response.split("\n").slice(1).join("\n"))[0][1]
     const extensions = cleanResponse[1]
+    console.log(extensions)
     for (let i = 0; i < extensions.length; i++ ) {
         const extensionId = extensions[i][0]
+        const name = extensions[i][1]
         // index of detail : 37
         // console.log(extensions[i][37])
         const downloadLink = buildDownloadLink(extensionId)
         try {
-            if (extensionId === 'kkhacajnlbpkdjgomnfknhbbpioiiiep') {
-                const filePath = await downloadFile(downloadLink, extensionId)
-                const extensionZip = await checkFileAndParse(filePath, extensionId)
-
-                const zip = new StreamZip({
-                    file: extensionId+'.zip',
-                    storeEntries: true
-                });
-                
-                zip.on('ready', () => {
-                    zip.extract('manifest.json', './manifest.json', err => {
-                        console.log(err ? 'Extract error' : 'Extracted');
-                        zip.close();
-                    });
-                });
+            const filePath = './extensions/' + extensionId + '.crx'
+            await downloadFile(downloadLink, filePath)
+            await unzip(filePath)
+            let manifestRaw = fs.readFileSync('./extensions/' + extensionId + '/manifest.json');  
+            let manifest = JSON.parse(manifestRaw);
+            console.log(name)
+            if (manifest.permissions) {
+                console.log(manifest.permissions)
             }
+            rmdir('./extensions/' + extensionId + '/', (err) => {
+                if (err) throw err;
+            })
+            fs.unlink(filePath, (err) => {
+                if (err) throw err;
+            });
         } catch (error) {
             console.log(error)
         }

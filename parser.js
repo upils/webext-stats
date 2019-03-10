@@ -27,7 +27,7 @@ const CRXFileParser = function(fileBuffer) {
         return o;
     }
 
-    this.parse = function (dataView, arrayBuffer) {
+    this.parse = async function (dataView, arrayBuffer) {
         var magic = dataView.getUint32(0)
 
         if (magic == 0x43723234) { // Cr24
@@ -50,7 +50,7 @@ const CRXFileParser = function(fileBuffer) {
         const signatureBuffer = arrayBuffer.slice(16 + publicKeyLength, 16 + publicKeyLength + signatureLength)
 
         const zipArchiveBuffer = arrayBuffer.slice(16 + publicKeyLength + signatureLength)
-        console.log(arrayBuffer.byteLength)
+        console.log(zipArchiveBuffer.byteLength)
 
         return [zipArchiveBuffer, publicKeyBuffer, signatureBuffer]
     }
@@ -58,7 +58,7 @@ const CRXFileParser = function(fileBuffer) {
     this.asyncLoad = async function () {
         try {
             const view = new DataView(this.fileBuffer)
-            const parsedData = self.parse(view, this.fileBuffer)
+            const parsedData = await self.parse(view, this.fileBuffer)
             return parsedData
         } catch (error) {
             console.log(error)
@@ -66,16 +66,15 @@ const CRXFileParser = function(fileBuffer) {
     }
 }
 
-const checkFileAndParse = async function (filePath, extensionId) {
+const checkFileAndParse = async function (filePath) {
     const file = await readFile(filePath)
     const fileBuffer = file.buffer
+    console.log(fileBuffer)
     const parser = await new CRXFileParser(fileBuffer)
     try {
         const parsingResult = await parser.asyncLoad()
         const zipArchiveBuffer = parsingResult[0]
-        const outputFile = Buffer.from(zipArchiveBuffer)
-        console.log(outputFile.byteLength)
-        await writeFile(extensionId+'.zip', outputFile)
+        const outputFile = new Uint8Array(Buffer.from(zipArchiveBuffer))
     }
     catch (error) {
         console.log(error)
